@@ -7,12 +7,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+if (!process.env.MONGO_PUBLIC_URL) {
+    console.error("ERRO: MONGO_URI não definido no .env");
+    process.exit(1);
+}
+
 if (!process.env.MONGO_URI) {
     console.error("ERRO: MONGO_URI não definido no .env");
     process.exit(1);
 }
 
-mongoose.connect(process.env.MONGO_URI)
+console.log("🔍 MONGO_PUBLIC_URL:", process.env.MONGO_PUBLIC_URL);
+
+mongoose.connect(process.env.MONGO_PUBLIC_URL)
     .then(() => console.log("MongoDB conectado"))
     .catch(err => {
         console.error("Erro ao conectar ao MongoDB:", err);
