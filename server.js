@@ -12,10 +12,10 @@ if (!process.env.MONGO_PUBLIC_URL) {
     process.exit(1);
 }
 
-if (!process.env.MONGO_URI) {
-    console.error("ERRO: MONGO_URI não definido no .env");
-    process.exit(1);
-}
+// if (!process.env.MONGO_URI) {
+//     console.error("ERRO: MONGO_URI não definido no .env");
+//     process.exit(1);
+// }
 
 console.log("🔍 MONGO_PUBLIC_URL:", process.env.MONGO_PUBLIC_URL);
 
