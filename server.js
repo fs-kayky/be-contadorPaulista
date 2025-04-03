@@ -7,46 +7,45 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 🚀 Verifica se a variável de ambiente foi carregada
 if (!process.env.MONGO_PUBLIC_URL) {
-    console.error("ERRO: MONGO_URI não definido no .env");
+    console.error("❌ ERRO: MONGO_PUBLIC_URL não foi definido!");
     process.exit(1);
 }
 
-// if (!process.env.MONGO_URI) {
-//     console.error("ERRO: MONGO_URI não definido no .env");
-//     process.exit(1);
-// }
-
-console.log("🔍 MONGO_PUBLIC_URL:", process.env.MONGO_PUBLIC_URL);
-
-mongoose.connect(process.env.MONGO_PUBLIC_URL)
-    .then(() => console.log("MongoDB conectado"))
+// 🔗 Conectar ao MongoDB com timeout maior para evitar erros
+mongoose.connect(process.env.MONGO_PUBLIC_URL, {
+    serverSelectionTimeoutMS: 30000, // Tempo máximo para conectar ao servidor (30s)
+    socketTimeoutMS: 45000, // Tempo máximo de resposta do socket (45s)
+}).then(() => console.log("✅ MongoDB conectado com sucesso!"))
     .catch(err => {
-        console.error("Erro ao conectar ao MongoDB:", err);
+        console.error("❌ Erro ao conectar MongoDB:", err);
         process.exit(1);
     });
 
-const CounterSchema = new mongoose.Schema({ clicks: { type: Number, default: 0 } });
+// Criar Schema e Modelo
+const CounterSchema = new mongoose.Schema({ clicks: Number });
 const Counter = mongoose.model("Counter", CounterSchema);
 
+// Inicializar contador no banco
 const initCounter = async () => {
     try {
         const existing = await Counter.findOne();
         if (!existing) {
             await Counter.create({ clicks: 0 });
-            console.log("✅ Contador inicializado com 0 cliques");
         }
-    } catch (error) {
-        console.error("Erro ao inicializar contador:", error);
+    } catch (err) {
+        console.error("❌ Erro ao inicializar contador:", err);
     }
 };
 initCounter();
 
+// Rotas da API
 app.get("/clicks", async (req, res) => {
     try {
         const counter = await Counter.findOne();
-        res.json({ clicks: counter ? counter.clicks : 0 });
-    } catch (error) {
+        res.json({ clicks: counter?.clicks || 0 });
+    } catch (err) {
         res.status(500).json({ error: "Erro ao buscar contador" });
     }
 });
@@ -54,18 +53,16 @@ app.get("/clicks", async (req, res) => {
 app.post("/clicks", async (req, res) => {
     try {
         const counter = await Counter.findOne();
-        if (counter) {
-            counter.clicks += 1;
-            await counter.save();
-            res.json({ clicks: counter.clicks });
-        } else {
-            res.status(500).json({ error: "Contador não encontrado" });
-        }
-    } catch (error) {
+        if (!counter) return res.status(500).json({ error: "Contador não encontrado" });
+
+        counter.clicks += 1;
+        await counter.save();
+        res.json({ clicks: counter.clicks });
+    } catch (err) {
         res.status(500).json({ error: "Erro ao atualizar contador" });
     }
 });
 
-// 🏁 Inicia o servidor
-const PORT = process.env.PORT || 3000;
+// 🚀 Iniciar o servidor
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
